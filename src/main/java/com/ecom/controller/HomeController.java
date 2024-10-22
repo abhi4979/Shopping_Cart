@@ -18,8 +18,13 @@ public class HomeController {
 	public String signUp() {
 		return "signup";
 	}
-	@GetMapping("/product")
+	@GetMapping("/products")
 	public String products() {
 		return "product";
 	}
+	@GetMapping("/product")
+	public String product() {
+		return "view_product";
+	}
+	
 }
