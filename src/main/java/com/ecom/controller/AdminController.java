@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ecom.model.Category;
 import com.ecom.service.CategoryService;
@@ -31,21 +34,36 @@ public class AdminController {
     	return "admin/category";
     }
     @PostMapping("/savecategory")
-    public String savecategory(@ModelAttribute Category category,HttpSession session) {
-    	if(service.existCategory(category.getName())) {
-    		session.setAttribute("errorMsg", "category Name already exist");
-    	}else {
-     		Category savecategory=service.saveCategory(category);
-     		if(ObjectUtils.isEmpty(savecategory)) {
-     			session.setAttribute("errorMsg", "Not Saved! internal server error");
-     		}else {
-    			session.setAttribute("successMsg", "saved Successfully");
-     		}
-    	}
-    	
-    	
-    	service.saveCategory(category);
-    	
-    	return "redirect:/category";
+    public String saveCategory(@ModelAttribute Category category, 
+                               @RequestParam("file") MultipartFile file, 
+                               RedirectAttributes redirectAttributes) {
+        String imageName = file != null && !file.isEmpty() ? file.getOriginalFilename() : "default.jpg";
+        category.setImagename(imageName);
+
+        // Clear previous messages
+        redirectAttributes.addFlashAttribute("successMsg", null);
+        redirectAttributes.addFlashAttribute("errorMsg", null);
+
+        Boolean existCategory = service.existCategory(category.getName());
+        
+        // Check if category exists
+        if (existCategory) {
+            redirectAttributes.addFlashAttribute("errorMsg", "Category name already exists.");
+            System.out.println("Category name already exists."); // Debug log
+        } else {
+            Category savedCategory = service.saveCategory(category);
+            
+            // Check if the category was saved
+            if (savedCategory == null) {
+                redirectAttributes.addFlashAttribute("errorMsg", "Not saved! Internal server error.");
+                System.out.println("Not saved! Internal server error."); // Debug log
+            } else {
+                redirectAttributes.addFlashAttribute("successMsg", "Category saved successfully.");
+                System.out.println("Category saved successfully."); // Debug log
+            }
+        }
+
+        return "redirect:/admin/category";
     }
+
 }
